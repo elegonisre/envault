@@ -29,6 +29,18 @@ class TestGenerateKeypair:
         assert b"PRIVATE KEY" in (tmp_path / "priv.pem").read_bytes()
         assert b"PUBLIC KEY" in (tmp_path / "pub.pem").read_bytes()
 
+    def test_private_key_is_not_world_readable(self, tmp_path):
+        """Private key file permissions should restrict access to owner only."""
+        import stat
+
+        priv = str(tmp_path / "priv.pem")
+        pub = str(tmp_path / "pub.pem")
+        generate_keypair(priv, pub)
+        mode = (tmp_path / "priv.pem").stat().st_mode
+        # Ensure group and others have no read permission
+        assert not (mode & stat.S_IRGRP), "Group should not have read access"
+        assert not (mode & stat.S_IROTH), "Others should not have read access"
+
 
 class TestExportKey:
     def test_returns_json_string(self, keypair):
@@ -68,3 +80,9 @@ class TestImportKey:
         bad_token = json.dumps({"v": 99, "key": "abc"})
         with pytest.raises(ValueError, match="Unsupported token version"):
             import_key(bad_token, priv)
+
+    def test_malformed_token_raises(self, keypair):
+        """import_key should raise an error when given invalid JSON."""
+        priv, _ = keypair
+        with pytest.raises(Exception):
+            import_key("not-valid-json", priv)
