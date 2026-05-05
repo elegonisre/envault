@@ -14,6 +14,19 @@ def _prompt(prompt: str) -> str:
     return getpass.getpass(prompt)
 
 
+def _validate_new_password(new_password: str, confirm: str) -> None:
+    """Validate that the new password meets basic requirements.
+
+    Raises ``SystemExit`` with an informative message if validation fails.
+    """
+    if new_password != confirm:
+        print("error: passwords do not match.", file=sys.stderr)
+        sys.exit(1)
+    if not new_password:
+        print("error: new password must not be empty.", file=sys.stderr)
+        sys.exit(1)
+
+
 def cmd_rotate(args: argparse.Namespace) -> None:  # noqa: D401
     """Handler for the ``rotate`` sub-command."""
     vault = Path(args.vault)
@@ -25,9 +38,7 @@ def cmd_rotate(args: argparse.Namespace) -> None:  # noqa: D401
     new_password = _prompt("New password: ")
     confirm = _prompt("Confirm new password: ")
 
-    if new_password != confirm:
-        print("error: passwords do not match.", file=sys.stderr)
-        sys.exit(1)
+    _validate_new_password(new_password, confirm)
 
     try:
         output = rotate_key(
