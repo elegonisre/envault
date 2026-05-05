@@ -12,6 +12,9 @@ NONCE_SIZE = 12
 KEY_SIZE = 32
 ITERATIONS = 390000
 
+# Minimum payload length: salt + nonce + GCM auth tag (16 bytes)
+_MIN_PAYLOAD_SIZE = SALT_SIZE + NONCE_SIZE + 16
+
 
 def derive_key(password: str, salt: bytes) -> bytes:
     """Derive a 256-bit AES key from a password using PBKDF2-HMAC-SHA256."""
@@ -47,6 +50,12 @@ def decrypt(encoded: str, password: str) -> str:
         payload = base64.b64decode(encoded.encode("utf-8"))
     except Exception as exc:
         raise ValueError("Invalid encoded payload.") from exc
+
+    if len(payload) < _MIN_PAYLOAD_SIZE:
+        raise ValueError(
+            f"Payload too short: expected at least {_MIN_PAYLOAD_SIZE} bytes, "
+            f"got {len(payload)}."
+        )
 
     salt = payload[:SALT_SIZE]
     nonce = payload[SALT_SIZE:SALT_SIZE + NONCE_SIZE]
