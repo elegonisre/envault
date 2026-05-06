@@ -49,9 +49,14 @@ def export_key(password: str, public_key_path: str) -> str:
 
 def import_key(token: str, private_key_path: str) -> str:
     """Decrypt a token produced by *export_key* using the RSA private key."""
-    data = json.loads(token)
+    try:
+        data = json.loads(token)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid token: not valid JSON") from exc
     if data.get("v") != 1:
         raise ValueError(f"Unsupported token version: {data.get('v')}")
+    if "key" not in data:
+        raise ValueError("Invalid token: missing 'key' field")
     ciphertext = base64.b64decode(data["key"])
     priv_key_bytes = Path(private_key_path).read_bytes()
     private_key = serialization.load_pem_private_key(
