@@ -82,7 +82,14 @@ class TestImportKey:
             import_key(bad_token, priv)
 
     def test_malformed_token_raises(self, keypair):
-        """import_key should raise an error when given invalid JSON."""
+        """import_key should raise ValueError when given invalid JSON."""
         priv, _ = keypair
-        with pytest.raises(Exception):
+        with pytest.raises((ValueError, json.JSONDecodeError)):
             import_key("not-valid-json", priv)
+
+    def test_missing_key_field_raises(self, keypair):
+        """import_key should raise an error when the 'key' field is absent."""
+        priv, _ = keypair
+        bad_token = json.dumps({"v": 1})
+        with pytest.raises((KeyError, ValueError)):
+            import_key(bad_token, priv)
