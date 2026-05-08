@@ -13,6 +13,23 @@ def _prompt(prompt_text: str) -> str:
     return getpass.getpass(prompt_text)
 
 
+def _print_diff_results(result) -> None:
+    """Print the diff results to stdout in a human-readable format."""
+    for key, value in result.added.items():
+        print(f"+ {key}={value}")
+    for key, value in result.removed.items():
+        print(f"- {key}={value}")
+    for key, (old_val, new_val) in result.changed.items():
+        print(f"~ {key}: {old_val!r} -> {new_val!r}")
+
+    print(
+        f"\nSummary: {len(result.added)} added, "
+        f"{len(result.removed)} removed, "
+        f"{len(result.changed)} changed, "
+        f"{len(result.unchanged)} unchanged."
+    )
+
+
 def cmd_diff(args: argparse.Namespace) -> None:
     """Decrypt both vaults and print a human-readable diff."""
     password = _prompt("Password for OLD vault: ")
@@ -32,19 +49,7 @@ def cmd_diff(args: argparse.Namespace) -> None:
         print("No differences found.")
         return
 
-    for key, value in result.added.items():
-        print(f"+ {key}={value}")
-    for key, value in result.removed.items():
-        print(f"- {key}={value}")
-    for key, (old_val, new_val) in result.changed.items():
-        print(f"~ {key}: {old_val!r} -> {new_val!r}")
-
-    print(
-        f"\nSummary: {len(result.added)} added, "
-        f"{len(result.removed)} removed, "
-        f"{len(result.changed)} changed, "
-        f"{len(result.unchanged)} unchanged."
-    )
+    _print_diff_results(result)
 
 
 def build_diff_parser(
